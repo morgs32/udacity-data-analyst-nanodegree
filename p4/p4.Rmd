@@ -3,21 +3,20 @@ title: "p4"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
 
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.path='Figs/',
+echo=FALSE, warning=FALSE, message=FALSE)
 ```
+
+
+
+
+```{r, echo=FALSE}
 
 ## Setup
 
-Make the working directory the folder for this project:
-
-```{r, echo=FALSE}
-getwd()
-setwd('/Users/Morgan/Github/udacity-data-analyst-nanodegree/p4')
-```
-
-```{r} 
 # setwd('<path to folder>/p4')
 # install.packages("ggplot2")
 # install.packages("knitr", dependencies = T)
@@ -25,20 +24,23 @@ setwd('/Users/Morgan/Github/udacity-data-analyst-nanodegree/p4')
 # install.packages("GGally", dependencies = T)
 # library(ggplot2)
 # library
-```
 
-```{r, echo=FALSE}
+#getwd()
+setwd('/Users/Morgan/Github/udacity-data-analyst-nanodegree/p4')
+
 library(ggplot2)
 library(GGally)
 library(grid)
 library(gridExtra)
-```
 
-Load the data:
 
-```{r}
+## Load the data:
+
 df <- read.csv('wineQualityReds.csv')
+
 ```
+
+# Introduction
 
 ## About the data
 
@@ -65,31 +67,26 @@ It's interesting to noe the min and max values for some of the chemical properti
 We are primarily interested in wine quality, which ranges from 3 - 8. The median is 6 and the average quality rating is 5.636.
 
 
-
-
-## GGPairs
-
-Let's get a quick look at all variable pairs
-
-```{r }
-# ggpairs(df)
-```
-
-![GGpairs](ggpairs.png)
-![GGpairs with Skitch](ggpairs 2.png)
-
-The correlations between all variables and quality are worth noting. The variable with the highest positive correlation is alcohol, followed by sulphates. The variable with the greatest negative correlation is volatile acidity (-0.391).
-
-
-
-## Initial observations
-
-Let's also look at the bottom row, a plot of each variable against quality. I noted the distributions for total sulfur dioxide against quality. For low amounts of sulfur dioxide, quality is either high or low. While for higher levels of sulfur dioxide, quality is more consistently around averge (5-6). I'll have to look into that relationship (it isn't linear). I think I can see a slightly *linear* relationship between alcohol and quality, density and quality, and volatile acidity and quality.
-
-
-## Plots
+# Plots
 
 Let's do some plots!
+
+
+## Univariate Analysis
+
+
+```{r echo=FALSE}
+
+# Function that get a basic histogram with a default binwidth of range/30
+get_basic_histogram <- 
+  function(column, data, binwidth = diff(range(data[column]))/30) {
+    return(ggplot(aes_string(x = column), data = data) + 
+             geom_histogram(binwidth = binwidth))
+  }
+
+get_basic_histogram("quality", df)
+
+```
 
 ### Distribution of Quality
 
@@ -97,18 +94,41 @@ It appears to be a normal distribution of quality.
 
 ```{r }
 
-ggplot(data = df,
-       aes(x = quality, binwidth = 1)) +
-  geom_histogram()
+get_basic_histogram("quality", df)
 
 ```
+
+The "quality" of each wine is one of 6 discrete values: 4, 5, 6, 7, 8.
+
+
+
+```{r }
+
+get_basic_histogram("fixed.acidity", df)
+get_basic_histogram("volatile.acidity", df, 0.1)
+get_basic_histogram("citric.acid", df)
+get_basic_histogram("residual.sugar", df)
+get_basic_histogram("chlorides", df)
+get_basic_histogram("free.sulfur.dioxide", df)
+get_basic_histogram("total.sulfur.dioxide", df)
+get_basic_histogram("density", df)
+get_basic_histogram("pH", df)
+get_basic_histogram("sulphates", df)
+get_basic_histogram("alcohol", df)
+get_basic_histogram("quality", df, 1)
+
+```
+
+
+
+## Bivariate Analysis
 
 
 ### Quality by Alcohol
 
 Now, let's look at the variables I thought might have a linear relationship with quality.
 
-``` {r Quality by Alcohol}
+``` {r Quality by Alcohol Scatterplot}
 ggplot(data = df,
        aes(x = alcohol, y = quality)) +
   geom_point() + 
@@ -128,81 +148,95 @@ ggplot(data = df,
   ggtitle('Quality by Alcohol with Jitter and Transparency')
 ```
 
+Looks like overplotting. So let's add some jitter and transparency to the points:
 
-### Quality by Density
+``` {r Quality by Alcohol with Jitter and Transparency with a Regression}
+ggplot(data = df,
+       aes(x = alcohol, y = quality)) +
+  geom_point(position = 'jitter', alpha = 0.5, size = 0.75) + 
+  scale_x_continuous() + 
+  scale_y_continuous() +
+  ggtitle('Quality by Alcohol with Jitter and Transparency and a Regression') +
+  geom_smooth(method='lm',formula=y~x)
+```
+
+
+### Box plots
+
+
+Thanks to feedback from the reviewer of my first submission, let's try a box plot instead of a scatter plot.
+
+``` {r Quality by Alcohol}
+ggplot(data = df,
+       aes(x = factor(quality), y = alcohol)) +
+  geom_boxplot() + 
+  ggtitle('Quality by Alcohol')
+```
+
+Box plots are definitely the way to go. Noticable correlation: higher rated wines have higher alcohol content.
+
+
+#### Quality by Density
 
 From looking at the plot below, I'm not so sure about the linear relationship
 
 ``` {r Quality by Density with Jitter and Transparency}
 
 ggplot(data = df,
-       aes(x = density, y = quality)) +
-  geom_point(position = 'jitter', alpha = 0.5, size = 0.75) + 
-  scale_x_continuous() + 
-  scale_y_continuous() +
+       aes(x = factor(quality), y = density)) +
+  geom_boxplot() + 
   ggtitle('Quality by Density with Jitter')
+
 ```
 
-### Quality by Volatile Acidity
+Weak correlation apparent.
+
+#### Quality by Volatile Acidity
 
 There might still be a linear relationship here
 
 ``` {r Quality by Volatile Acidity with Jitter and Transparency}
 ggplot(data = df,
-       aes(x = volatile.acidity, y = quality)) +
-  geom_point(position = 'jitter', alpha = 0.5, size = 0.75) + 
-  scale_x_continuous() + 
-  scale_y_continuous() +
+       aes(x = factor(quality), y = volatile.acidity)) +
+  geom_boxplot() + 
   ggtitle('Quality by Volatile Acidity with Jitter and Transparency')
 ```
 
+Looks like there is correlation, the lower the volatile acidity, the better the wine.
 
-### Quality by Sulphates
+
+#### Quality by Sulphates
 
 There might still be a linear relationship here
 
 ``` {r Quality by Sulphates with Jitter and Transparency}
 ggplot(data = df,
-       aes(x = sulphates, y = quality)) +
-  geom_point(position = 'jitter', alpha = 0.5, size = 0.75) + 
-  scale_x_continuous() + 
-  scale_y_continuous() +
+       aes(x = factor(quality), y = sulphates)) +
+  geom_boxplot() + 
   ggtitle('Quality by Sulphates with Jitter and Transparency')
 ```
 
+Lots of outliers, weak but positive correlation.
 
-### Quality by Acidic Attributes
 
-``` {r}
-grid.arrange(ggplot(data = df, aes(x = quality, y = fixed.acidity)) + 
-               ylab('Fixed Acidity') +
-               xlab('Quality') +
-               geom_point(),
-             ggplot(data = df, aes(x = quality, y = volatile.acidity)) +
-               ylab('Volatile Acidity') +
-               xlab('Quality') +
-               geom_point(), 
-             ggplot(data = df, aes(x = quality, y = citric.acid)) +
-               ylab('Citric Acid') +
-               xlab('Quality') +
-               geom_point(), 
-             ggplot(data = df, aes(x = quality, y = pH)) +
-               ylab('pH') +
-               xlab('Quality') +
-               geom_point())
 
+
+### Correlation matrix
+
+Let's get a quick look at the correlation between all variable pairs
+
+
+```{r }
+ggcorr(df)
 ```
 
+Looks like strong positive correlations between quality and alcohol. Fairly significant positive correlation between quality and sulphates (We will explore this later). And strong negative correlations between quality and volatile.acidity.
 
-## Problems
 
-I wanted to create a stacked plot of some acidic qualities with quality being the fill. I got this error:
-```{r}
-# ggplot(df, aes(x = citric.acid, y = fixed.acidity, colour = quality, fill = quality)) + geom_area(position = 'stack')
-# Error in f(...) : Aesthetics can not vary with a ribbon
-```
 
-So, I created a new variable "rating":
+### New Variable
+
+I created a new variable "rating" has 3 values: bad, average, good
 
 ``` {r}
 df$rating <- ifelse(df$quality < 5, 'bad', ifelse(
@@ -212,25 +246,69 @@ df$rating <- ordered(df$rating,
 summary(df$rating)
 ```
 
-While, that did get the stacked plot to work, the plot itself wasn't of much use:
 
-``` {r}
-ggplot(df, aes(x = citric.acid, y = rating)) + geom_area(position = 'stack')
+Now let's recreate those box plots with the rating instead of the quality variable
+
+### Grid of boxplots with variables against new variable Rating
+
+
+``` {r Boxplots against ratings}
+
+p1 <- ggplot(data = df,
+     aes(x = rating, y = alcohol)) +
+  geom_boxplot() + 
+  ggtitle('Rating by Alcohol')
+
+p2 <- ggplot(data = df,
+       aes(x = rating, y = density)) +
+  geom_boxplot() + 
+  ggtitle('Rating by Density')
+
+
+p3 <- ggplot(data = df,
+       aes(x = rating, y = volatile.acidity)) +
+  geom_boxplot() + 
+  ggtitle('Rating by Volatile Acidity')
+
+
+p4 <- ggplot(data = df,
+       aes(x = rating, y = sulphates)) +
+  geom_boxplot() + 
+  ggtitle('Rating by Sulphates')
+
+grid.arrange(p1, p2, p3, p4)
+
 ```
 
+No big suprises here.
 
-### Bivariate Analysis
 
+### Multivariate Analysis
+
+
+Now let's look at density and alcohol against ratings:
 
 ```{r}
+
+model <- lm(density ~ alcohol + rating, data=df)
+grid <- with(df, expand.grid(
+  alcohol = seq(min(alcohol), max(alcohol)),
+  rating = levels(rating)
+))
+
+grid$density <- stats::predict(model, newdata=grid)
+
+
 ggplot(data = df,
        aes(y = density, x = alcohol,
            color = rating)) +
   geom_point() +
-  scale_color_brewer()
+  scale_color_brewer() + geom_line(data=grid)
 
 
 ```
+
+#### Note: Added a regression line after review of prior submission
 
 It seems that as alcohol content increases, density decreases. Perhaps alcohol, by nature is more dense than the ingredients of wine? This last plot also indicates that, holding alcohol constant, density does not affect quality.
 
@@ -250,7 +328,65 @@ This makes me think that if you hold alcohol constant, then more sulphates impro
 
 
 
-## Model
+## Final Plots
+
+
+### Plot one
+
+``` {r}
+
+
+model <- lm(sulphates ~ alcohol + rating, data=df)
+grid <- with(df, expand.grid(
+  alcohol = seq(min(alcohol), max(alcohol)),
+  rating = levels(rating)
+))
+
+grid$sulphates <- stats::predict(model, newdata=grid)
+
+ggplot(data = df,
+       aes(y = sulphates, x = alcohol,
+           color = rating)) +
+  geom_point() +
+  scale_y_continuous(limits=c(0.3,1.5)) +
+  ylab("potassium sulphate (g/dm3)") +
+  xlab("alcohol (% by volume)") +
+  scale_color_brewer() +
+  geom_line(data=grid) + 
+  ggtitle("Alcohol and sulphates over wine quality")
+
+```
+
+What I did learn is that while there may be a correlation between alcohol and quality, or sulphates and quality (see correlation matrix above), there is little or no correlation between alcohol and sulphates.
+
+
+## Plot two: Quality by Acidic Attributes
+
+``` {r}
+grid.arrange(ggplot(data = df, aes(x = factor(quality), y = fixed.acidity)) + 
+               ylab('Fixed Acidity') +
+               xlab('Quality') +
+               geom_boxplot(),
+             ggplot(data = df, aes(x = factor(quality), y = volatile.acidity)) +
+               ylab('Volatile Acidity') +
+               xlab('Quality') +
+               geom_boxplot(), 
+             ggplot(data = df, aes(x = factor(quality), y = citric.acid)) +
+               ylab('Citric Acid') +
+               xlab('Quality') +
+               geom_boxplot(), 
+             ggplot(data = df, aes(x = factor(quality), y = pH)) +
+               ylab('pH') +
+               xlab('Quality') +
+               geom_boxplot())
+
+```
+
+
+This shows that there is a stronger correlation between quality and volatile acidity and citric acid then there is between quality and fixed acidity and pH.
+
+
+## Plot three: Model
 
 
 ```{r, echo=FALSE}
@@ -300,26 +436,11 @@ ggplot(data=results, aes(x=quality,y=error)) +
 
 The residual plot indicates wide swings in error.
 
+Judging by the regression model, there must be some key information missing that might better predict quality.
 
-## Final Plot
-
-``` {r}
-ggplot(data = df,
-       aes(y = sulphates, x = alcohol,
-           color = rating)) +
-  geom_point() +
-  scale_y_continuous(limits=c(0.3,1.5)) +
-  ylab("potassium sulphate (g/dm3)") +
-  xlab("alcohol (% by volume)") +
-  scale_color_brewer() +
-  ggtitle("Alcohol and sulphates over wine quality")
-
-```
 
 
 ## Reflection
-
-Judging by the regression model, there must be some key information missing that might better predict quality.
 
 From looking at the initial ggpairs plot, it did seem that there was some correlation between quality and a couple variables provided by the data set, namely: alcohol, sulphates, citric.acid, fixed.acidity, and volatile.acidity. Density may have been another variable we could have used in our model.
 
