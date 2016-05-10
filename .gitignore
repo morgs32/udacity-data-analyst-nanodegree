@@ -1,3 +1,5 @@
 # Created by .ignore support plugin (hsz.mobi)
 **/*.osm
 p5/ud120-projects
+p4/.RData
+p4/.Rhistory

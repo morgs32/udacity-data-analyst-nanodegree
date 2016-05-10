@@ -81,43 +81,136 @@ Let's do some plots!
 get_basic_histogram <- 
   function(column, data, binwidth = diff(range(data[column]))/30) {
     return(ggplot(aes_string(x = column), data = data) + 
-             geom_histogram(binwidth = binwidth))
+             geom_histogram(binwidth = binwidth) + 
+              ggtitle(paste('Histogram of',column))
+
+           )
   }
 
-get_basic_histogram("quality", df)
 
 ```
-
-### Distribution of Quality
-
-It appears to be a normal distribution of quality.
-
-```{r }
-
-get_basic_histogram("quality", df)
-
-```
-
-The "quality" of each wine is one of 6 discrete values: 4, 5, 6, 7, 8.
 
 
 
 ```{r }
 
 get_basic_histogram("fixed.acidity", df)
-get_basic_histogram("volatile.acidity", df, 0.1)
-get_basic_histogram("citric.acid", df)
-get_basic_histogram("residual.sugar", df)
-get_basic_histogram("chlorides", df)
-get_basic_histogram("free.sulfur.dioxide", df)
-get_basic_histogram("total.sulfur.dioxide", df)
-get_basic_histogram("density", df)
-get_basic_histogram("pH", df)
-get_basic_histogram("sulphates", df)
-get_basic_histogram("alcohol", df)
-get_basic_histogram("quality", df, 1)
+summary(df['fixed.acidity'])
 
 ```
+
+It looks like the distribution of fixed acidity is skewed positive.
+
+
+```{r }
+get_basic_histogram("volatile.acidity", df, 0.1)
+summary(df['volatile.acidity'])
+
+```
+
+Volatile acidity is also skewed positive by a relatively small number of outliers
+
+```{r }
+get_basic_histogram("citric.acid", df)
+summary(df['citric.acid'])
+
+```
+
+This does not resemble a normal distribution. Apparently, very many wines have little to no citric acid at all. I suppose rice wines would fall into this category. It would be interesting to know if some grape wines can be made without any citric acid.
+
+
+```{r }
+get_basic_histogram("residual.sugar", df)
+summary(df['residual.sugar'])
+
+```
+
+Again, the distribution is skewed positive, this time for residual sugar.
+
+
+```{r }
+get_basic_histogram("chlorides", df)
+summary(df['chlorides'])
+
+```
+
+The far majority of wines have roughlty .85 chlorides according to this graph.
+
+
+```{r }
+get_basic_histogram("free.sulfur.dioxide", df)
+summary(df['free.sulfur.dioxide'])
+
+```
+
+This distribution is skewed left with an even drop off after ~7 free sulfur dioxide, the maximum count of wines in this histogram.
+
+```{r }
+get_basic_histogram("total.sulfur.dioxide", df)
+summary(df['total.sulfur.dioxide'])
+
+```
+
+```{r }
+get_basic_histogram("density", df)
+summary(df['density'])
+
+```
+
+This one is a bell curve around a mean of .9967
+
+```{r }
+get_basic_histogram("pH", df)
+summary(df['pH'])
+
+```
+
+Another bell curve, this time around a mean of 3.311
+
+```{r }
+get_basic_histogram("sulphates", df)
+summary(df['sulphates'])
+
+```
+Skewed positive
+
+```{r }
+get_basic_histogram("alcohol", df)
+summary(df['alcohol'])
+
+```
+
+Surprisingly, there were some wines with little or no alcohol content included in this study. Otherwise, the majority of wines contained between 9 and 11% alcohol.
+
+
+### Distribution of Quality
+
+
+```{r }
+
+get_basic_histogram("quality", df)
+summary(df['quality'])
+
+```
+It appears to be a normal distribution of quality.
+
+
+The "quality" of each wine is one of 6 discrete values: 4, 5, 6, 7, 8.
+The distribution of wines by quality appears to be a bell curve - most wines are in the middle of the range, with quality ratings of 5 and 6.
+
+As my last reviewer points out:
+"Also, the quality distribution plot can be misleading.
+This is because of the spaces between the bars.
+It is unclear whether the bars represent discrete values(5, 6, 7...) or ranges(i.e., quality 5.0~5.9)"
+
+```{r }
+
+ggplot(aes_string(x = 'quality'), data = df) +
+             geom_bar(stat="count")
+summary(df['quality'])
+
+```
+
 
 
 
@@ -454,7 +547,8 @@ Another consideration: we cannot account for taste. We do not know who the taste
 
 What I did learn is that wines with high alcohol and sulphates do tend to be rated higher. So, those are ingredients I will look for when making my next wine purchase.
 
-
+### Difficulties
+The hardest part was understanding the language of ggplot. For example, trying to build a histogram of quality using factor('quality') will throw an error and R studio will advise "perhaps you want to use stat='count'". But, there's no suggestion of where to put it. After googling it for 10 minutes, you find that it is meant to be used with geom_bar() instead. But, understandably, there is a syntax and it's documented and it was at first esoteric but I'm slowly getting used to it!
 
 
 
