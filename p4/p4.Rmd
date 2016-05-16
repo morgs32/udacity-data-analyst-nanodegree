@@ -472,33 +472,56 @@ ggplot(data = df,
 
 ```
 
-What I did learn is that while there may be a correlation between alcohol and quality, or sulphates and quality (see correlation matrix above), there is little or no correlation between alcohol and sulphates.
+While there may be a correlation between alcohol and quality, or sulphates and quality (see correlation matrix above), there is little or no correlation between alcohol and sulphates. This is demonstrated by the flat regression lines in the plot. What we do see is that higher levels of sulphates will indicate better quality wines, as indicated by the three different lines in our multivariate analysis. But we knew that already.
+
+Something else worth noting is that as alcohol levels increase, sulphate levels appear to converge on a level around ~.7; that is, there appears to be a conic distribution pointing to the right side of the plot. Or in other words, if we were to make a plot of the accuracy of our regression, we would see very large errors for low levels of alcohol and less error for high levels of alcohol.
+
+The top 10 google results when searching "wine high alcohol low sulphates" are mostly about how "sulfites" in red wines can cause headaches much akin to hangovers. This is a stab in the dark, but perhaps with high levels of alcohol, wine makers make sure to reduce the amount of sulphates in order to reduce hangovers? Probably not, but still, I'm curious about this relationship.
 
 
 ## Plot two: Quality by Acidic Attributes
 
 ``` {r}
-grid.arrange(ggplot(data = df, aes(x = factor(quality), y = fixed.acidity)) + 
+p1 <- ggplot(data = df, aes(x = factor(quality), y = fixed.acidity)) + 
                ylab('Fixed Acidity') +
                xlab('Quality') +
-               geom_boxplot(),
-             ggplot(data = df, aes(x = factor(quality), y = volatile.acidity)) +
+               geom_boxplot()
+p2 <- ggplot(data = df, aes(x = factor(quality), y = volatile.acidity)) +
                ylab('Volatile Acidity') +
                xlab('Quality') +
-               geom_boxplot(), 
-             ggplot(data = df, aes(x = factor(quality), y = citric.acid)) +
+               geom_boxplot()
+p3 <- ggplot(data = df, aes(x = factor(quality), y = citric.acid)) +
                ylab('Citric Acid') +
                xlab('Quality') +
-               geom_boxplot(), 
-             ggplot(data = df, aes(x = factor(quality), y = pH)) +
+               geom_boxplot()
+p4 <- ggplot(data = df, aes(x = factor(quality), y = pH)) +
                ylab('pH') +
                xlab('Quality') +
-               geom_boxplot())
+               geom_boxplot()
+g1 <- grid.arrange(p1,p2,p3,p4, 
+             top=textGrob("Boxplots of Quality for different types of Acidity Measurements")
+)
+
+reg1 <- lm(quality~fixed.acidity,df)
+reg2 <- lm(quality~volatile.acidity,df)
+reg3 <- lm(quality~citric.acid,df)
+reg4 <- lm(quality~pH,df)
+
+summary(reg1)
+summary(reg2)
+summary(reg3)
+summary(reg4)
 
 ```
 
+Ok, the R-squared value for our four variables against quality:
+pH | .003
+fixed.acidity  |  .015
+citric.acid | .051
+volatile acidity | .1525
 
-This shows that there is a stronger correlation between quality and volatile acidity and citric acid then there is between quality and fixed acidity and pH.
+We already knew that the most positive correlation was between volatile acidity and quality. Here we see just how strong the correlation is. With an R-squared value of .1525, it is a far stronger correlation than the others. That means variation in volatile acidity is a much better predictor of quality than variation in any of the other variables.
+
 
 
 ## Plot three: Model
@@ -545,24 +568,18 @@ results <- data.frame(
   predict(m5, test_data) - as.numeric(test_data$quality)
 )
 names(results) <- c("quality", "error")
-ggplot(data=results, aes(x=quality,y=error)) +
-  geom_point(position = 'jitter', alpha = 0.5, size = 0.75)
-```
-
-The residual plot indicates wide swings in error.
-
-And let's see it as a box plot...
-
-``` {r}
 ggplot(data = results,
        aes(y = error, x = quality, group = factor(quality))) +
-  geom_boxplot()
+  geom_boxplot() +
+  ggtitle("Error of Regression Model for different Qualities of Wine")
 
 ```
 
-This IS interesting. The error is so much larger for poorly rated wines. While at the other end of the spectrum, the error is much lower...
+This is interesting. The error is so much larger for poorly rated wines than it is for good wines. This means that our regression is much better at predicting quality for high quality wines.
 
-Anyway, judging by the regression model, there must be some key information missing that might better predict quality.
+Judging by the regression model and the low R-squared value, there might be some key information missing that could better predict quality.
+
+Off the top o fmy head, I'm curious if Age would be a good indicator of high quality wine. Or Climate where the vineyard is based.
 
 
 
